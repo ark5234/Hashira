@@ -1,0 +1,14 @@
+{
+  "name": "hashira-assessment",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node src/index.js",
+    "test:sample": "node src/index.js data/sample.json",
+    "test:case2": "node src/index.js data/case2.json"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
