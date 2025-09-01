@@ -115,6 +115,62 @@ f(0) = Σ_{i=1..k} y_i * Π_{j≠i} ( -x_j / (x_i - x_j) ).
 
 All arithmetic is exact over rationals (no rounding), implemented with BigInt numerators/denominators and reduction by gcd.
 
+## Worked examples
+
+### TestCase 1
+
+Input:
+
+```json
+{
+  "keys": { "n": 4, "k": 3 },
+  "1": { "base": "10", "value": "4" },
+  "2": { "base": "2", "value": "111" },
+  "3": { "base": "10", "value": "12" },
+  "6": { "base": "4", "value": "213" }
+}
+```
+
+Points (x, y) are taken from the JSON keys and values; y is parsed in its base:
+
+- x=1, base10 "4" → y=4
+- x=2, base2  "111" → y=7
+- x=3, base10 "12" → y=12
+- x=6, base4  "213" → y = 2×4^2 + 1×4 + 3 = 2×16 + 4 + 3 = 39
+
+With k=3, degree m=k−1=2. Interpolating with first k points (x=1,2,3 and y=4,7,12) gives:
+
+- P(x) = x^2 + 3
+- Coefficients (low→high): [3, 0, 1]
+- f(0) = 3
+
+Verification on the three used points:
+
+- P(1)=1+3=4
+- P(2)=4+3=7
+- P(3)=9+3=12
+
+So the computed polynomial is correct for k points. The fourth point (x=6, y=39) is not used when k=3; a degree-2 polynomial through (1,4), (2,7), (3,12) won’t necessarily pass through (6,39), which is expected.
+
+### TestCase 2
+
+Input: n=10, k=7 with mixed-base large values (see data/case2.json).
+
+- Using all n=10 points constructs a degree-9 polynomial; output verifies true.
+  - Degree: 9
+  - f(0): -13478698549472778234
+  - Verified: true
+
+- Using only the first k=7 points constructs a degree-6 polynomial; this will fit those 7 points but fail on the remaining 3.
+  - Degree: 6
+  - f(0): -6290016743746469796
+  - Verified: false (against all n points)
+
+Final verdict:
+
+- TestCase 1: Correct — P(x)=x^2+3, degree=2, f(0)=3.
+- TestCase 2: Correct — degree 9 with all points (verified), f(0)=-13478698549472778234. Degree 6 with only k points is also mathematically correct for those k points but won’t match all n points.
+
 ## How it works
 
 - Parses mixed-base strings to BigInt.
