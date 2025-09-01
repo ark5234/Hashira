@@ -179,7 +179,7 @@ public class PolynomialFromRoots {
     }
 
     public static void main(String[] args) throws Exception {
-        String input = args.length>0 ? args[0] : "data/sample.json";
+    String input = args.length>0 && !args[0].startsWith("--") ? args[0] : "data/sample.json";
         String json = Files.readString(Paths.get(input));
         Testcase t = parseTestcase(json);
 
@@ -193,12 +193,19 @@ public class PolynomialFromRoots {
             ysAll.add(toBigInt(p.value, p.base));
         }
         // Use first k points by default; if --use-all is provided, use all
-        boolean useAll = Arrays.stream(args).anyMatch(a -> a.equals("--use-all"));
+    boolean useAll = Arrays.stream(args).anyMatch(a -> a.equals("--use-all"));
+    boolean onlyC = Arrays.stream(args).anyMatch(a -> a.equals("--only-c"));
         int kUse = useAll ? xsAll.size() : t.k;
         List<BigInteger> xs = xsAll.subList(0, kUse);
         List<BigInteger> ys = ysAll.subList(0, kUse);
 
         List<Rational> P = lagrange(xs, ys);
+        if (onlyC){
+            // constant term is P(0)
+            System.out.println(P.get(0));
+            return;
+        }
+
         // Verify against all provided points
         boolean ok = true;
         List<String> mismatches = new ArrayList<>();

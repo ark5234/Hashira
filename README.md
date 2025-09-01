@@ -31,6 +31,10 @@ Options:
   node src/index.js data\case2.json
 - Use all n points (fits degree n-1 polynomial):
   node src/index.js data\case2.json --use-all
+- Print only the constant term c=f(0):
+  node src/index.js data\sample.json --only-c
+  node src/index.js data\case2.json --only-c
+  node src/index.js data\case2.json --use-all --only-c
 
 ### Java (alternative implementation)
 
@@ -40,6 +44,9 @@ Compile and run using the same data files:
 javac .\java\src\main\java\PolynomialFromRoots.java
 java -cp .\java\src\main\java PolynomialFromRoots data\sample.json
 java -cp .\java\src\main\java PolynomialFromRoots data\case2.json
+java -cp .\java\src\main\java PolynomialFromRoots data\sample.json --only-c
+java -cp .\java\src\main\java PolynomialFromRoots data\case2.json --only-c
+java -cp .\java\src\main\java PolynomialFromRoots data\case2.json --use-all --only-c
 ```
 
 Notes:
@@ -194,12 +201,12 @@ git push -u origin main
 
 Include the repository link and paste the outputs above in your submission.
 
-## Submission order (copy/paste)
+## Submission
 
 1. GITHUB link:
   <https://github.com/ark5234/Hashira>
 
-2. Enter your answer (secret f(0)) for Testcase 1:
+2. Answer (secret f(0)) for Testcase 1:
   3
 
 3. Output for TestCase - 1:

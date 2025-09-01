@@ -19,11 +19,12 @@ function readPointsFromJson(obj){
 
 function parseCli(){
   const args = process.argv.slice(2);
-  const res = { input: 'data/sample.json', useAll: false, kOverride: null };
+  const res = { input: 'data/sample.json', useAll: false, kOverride: null, onlyC: false };
   if (args[0] && !args[0].startsWith('--')) res.input = args[0];
   for (const a of args){
     if (a === '--use-all') res.useAll = true;
     else if (a.startsWith('--k=')) res.kOverride = Number(a.split('=')[1]);
+    else if (a === '--only-c') res.onlyC = true;
   }
   return res;
 }
@@ -39,6 +40,11 @@ function main(){
   // Build polynomial and get f(0) from constant term
   const P = lagrangePolynomial(subset);
   const f0 = P[0];
+  if (opts.onlyC){
+    try { console.log(f0.toBigIntExact().toString()); }
+    catch { console.log(f0.toString()); }
+    return;
+  }
   // Verify polynomial matches all provided points
   const mismatches = [];
   for (const pt of points){
