@@ -1,6 +1,7 @@
 # Node
 node_modules/
 .npmrc
+java/**/*.class
 
 # Logs
 npm-debug.log*

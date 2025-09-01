@@ -3,10 +3,6 @@ import java.math.BigInteger;
 import java.nio.file.*;
 import java.util.*;
 
-// Minimal JSON parsing relying on java.util for this simple, known structure.
-// To avoid external jars, we read the file and parse with a tiny hand-rolled helper
-// for the specific schema used in this assessment.
-
 public class PolynomialFromRoots {
 
     // Parse map-like JSON where keys are known: keys, and numeric string keys for points
@@ -17,7 +13,7 @@ public class PolynomialFromRoots {
         List<Point> points = new ArrayList<>();
     }
 
-    // Very small and permissive parser tailored to the provided schema
+    // Very small parser tailored to the provided schema
     static Testcase parseTestcase(String json) {
         Testcase t = new Testcase();
         // Remove whitespace
@@ -160,18 +156,12 @@ public class PolynomialFromRoots {
         for (int i=0;i<k;i++){
             Rational xi = Rational.of(xs.get(i));
             Rational yi = Rational.of(ys.get(i));
-            List<Rational> numer = new ArrayList<>(); numer.add(Rational.of(1));
+            List<Rational> numer = new ArrayList<>(); numer.add(Rational.of(1)); // 1
             Rational denom = Rational.of(1);
             for (int j=0;j<k;j++) if (j!=i){
                 Rational xj = Rational.of(xs.get(j));
-                numer = polyMulLinear(numer, xj);
-                denom = denom.add(xi.sub(xj)); // wrong: placeholder to keep structure; fix below
-            }
-            // FIX denom: product of (xi - xj)
-            denom = Rational.of(1);
-            for (int j=0;j<k;j++) if (j!=i){
-                Rational xj = Rational.of(xs.get(j));
-                denom = denom.mul(xi.sub(xj));
+                numer = polyMulLinear(numer, xj);        // multiply by (x - xj)
+                denom = denom.mul(xi.sub(xj));           // multiply by (xi - xj)
             }
             List<Rational> Li = polyScale(numer, new Rational(BigInteger.ONE, BigInteger.ONE).div(denom));
             List<Rational> term = polyScale(Li, yi);
@@ -180,14 +170,20 @@ public class PolynomialFromRoots {
         return P;
     }
 
+    static Rational polyEval(List<Rational> P, Rational x){
+        Rational acc = Rational.of(0);
+        for (int i=P.size()-1;i>=0;i--){
+            acc = P.get(i).add(acc.mul(x));
+        }
+        return acc;
+    }
+
     public static void main(String[] args) throws Exception {
-        String input = args.length>0 ? args[0] : "data/sample.json"; // reuse same data files
+        String input = args.length>0 ? args[0] : "data/sample.json";
         String json = Files.readString(Paths.get(input));
         Testcase t = parseTestcase(json);
 
-        if (t.points.size() != t.n) {
-            System.err.println("Warning: expected n="+t.n+" points, got "+t.points.size());
-        }
+        if (t.points.size() != t.n) System.err.println("Warning: expected n="+t.n+" points, got "+t.points.size());
         if (t.k < 1 || t.k > t.points.size()) throw new IllegalArgumentException("Invalid k");
         // Map to (x, y) as BigInteger
         List<BigInteger> xsAll = new ArrayList<>();
@@ -196,11 +192,24 @@ public class PolynomialFromRoots {
             xsAll.add(BigInteger.valueOf(p.x));
             ysAll.add(toBigInt(p.value, p.base));
         }
-        // Use first k points
-        List<BigInteger> xs = xsAll.subList(0, t.k);
-        List<BigInteger> ys = ysAll.subList(0, t.k);
+        // Use first k points by default; if --use-all is provided, use all
+        boolean useAll = Arrays.stream(args).anyMatch(a -> a.equals("--use-all"));
+        int kUse = useAll ? xsAll.size() : t.k;
+        List<BigInteger> xs = xsAll.subList(0, kUse);
+        List<BigInteger> ys = ysAll.subList(0, kUse);
 
         List<Rational> P = lagrange(xs, ys);
+        // Verify against all provided points
+        boolean ok = true;
+        List<String> mismatches = new ArrayList<>();
+        for (int i=0;i<t.points.size();i++){
+            Rational y = polyEval(P, Rational.of(xsAll.get(i)));
+            boolean intOk = y.d.equals(BigInteger.ONE);
+            if (!intOk || !y.n.equals(ysAll.get(i))){
+                ok = false;
+                mismatches.add("x="+xsAll.get(i)+" expected="+ysAll.get(i)+" got="+y);
+            }
+        }
         // Output
         System.out.println("degree: " + (P.size()-1));
         System.out.print("coefficients (low->high): ");
@@ -210,5 +219,10 @@ public class PolynomialFromRoots {
         }
         System.out.println();
         System.out.println("f(0): " + P.get(0));
+        System.out.println("verified: " + ok);
+        if (!ok){
+            System.out.println("mismatches: ");
+            for (String m : mismatches) System.out.println("  " + m);
+        }
     }
 }
