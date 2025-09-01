@@ -1,10 +1,10 @@
 # Polynomial Reconstruction (Non-Python)
 
-This solution reads testcases in the specified JSON format, converts mixed-base y-values, and reconstructs the minimal-degree polynomial using Lagrange interpolation over rationals (BigInt-safe). It also reports the secret f(0).
+This project reconstructs a polynomial P(x) from n given points (x_i, y_i) provided in JSON, where each y_i is encoded in a given base. It uses exact Lagrange interpolation over rationals (BigInt) to avoid floating-point error, and reports the polynomial coefficients and the secret f(0) = P(0).
 
-- Language/Runtime: Node.js (>= 18)
-- Input: Path to a JSON testcase file
-- Output: JSON including degree, coefficients (as rationals), and f(0)
+- Language/Runtime: Node.js (>= 18); Java (optional alternative)
+- Input: JSON testcases as provided
+- Output: polynomial degree, coefficients (as rationals), f(0), and a verification flag
 
 ## Run
 
@@ -24,6 +24,13 @@ Or via npm scripts:
 npm run test:sample
 npm run test:case2
 ```
+
+Options:
+
+- Use only the first k points (default, as per testcase k):
+  node src/index.js data\case2.json
+- Use all n points (fits degree n-1 polynomial):
+  node src/index.js data\case2.json --use-all
 
 ### Java (alternative implementation)
 
@@ -66,18 +73,22 @@ Notes:
 
 ```json
 {
-  "degree": 6,
+  "degree": 9,
   "coefficients": [
-    "-6290016743746469796",
-    "263287321821700164753/20",
-    "-1176819016069423221523/120",
-    "21267399969085604485/6",
-    "-2695332236994289795/4",
-    "3901652238294748211/60",
-    "-274832148322104827/120"
+    "-13478698549472778234",
+    "1833418570792308113423/56",
+    "-4960281346989528422327/160",
+    "79305979839166094365147/5040",
+    "-27786940237806044278753/5760",
+    "5406336350476139866597/5760",
+    "-335777692580281062209/2880",
+    "181813744003161222077/20160",
+    "-2267857950616037857/5760",
+    "299528408571929531/40320"
   ],
-  "f0": "-6290016743746469796",
-  "f0_int": "-6290016743746469796"
+  "f0": "-13478698549472778234",
+  "f0_int": "-13478698549472778234",
+  "verified": true
 }
 ```
 
@@ -85,6 +96,24 @@ Notes:
 
 - coefficients are reported lowest degree first: [c0, c1, ..., cm]
 - f(0) is the constant term c0 (the "secret").
+
+If you strictly use only the first k points for the second testcase (k=7), you will get a degree-6 polynomial whose f(0) is -6290016743746469796, but it won’t verify against all n points. Using all points (n=10) reconstructs the degree-9 polynomial above and verifies true.
+
+## Mathematical explanation
+
+Given k distinct x-values x_1, …, x_k and their corresponding y-values y_1, …, y_k, the Lagrange interpolation polynomial of degree at most k-1 is
+
+P(x) = Σ_{i=1..k} y_i * L_i(x), where L_i(x) = Π_{j≠i} (x - x_j) / (x_i - x_j).
+
+We compute coefficients in ascending degree [c0, c1, …, c_{k-1}] such that
+
+P(x) = c0 + c1 x + c2 x^2 + … + c_{k-1} x^{k-1}.
+
+The secret f(0) is simply the constant term c0. Equivalently,
+
+f(0) = Σ_{i=1..k} y_i * Π_{j≠i} ( -x_j / (x_i - x_j) ).
+
+All arithmetic is exact over rationals (no rounding), implemented with BigInt numerators/denominators and reduction by gcd.
 
 ## How it works
 
@@ -108,3 +137,22 @@ git push -u origin main
 ```
 
 Include the repository link and paste the outputs above in your submission.
+
+## Submission order (copy/paste)
+
+1. GITHUB link:
+  <https://github.com/ark5234/Hashira>
+
+2. Enter your answer (secret f(0)) for Testcase 1:
+  3
+
+3. Output for TestCase - 1:
+  degree: 2; coefficients (low->high): [3, 0, 1]; f(0): 3; verified: true
+
+4. Output for TestCase - 2:
+  Using all points (recommended):
+  degree: 9; f(0): -13478698549472778234; verified: true
+  coefficients (low->high): [-13478698549472778234, 1833418570792308113423/56, -4960281346989528422327/160, 79305979839166094365147/5040, -27786940237806044278753/5760, 5406336350476139866597/5760, -335777692580281062209/2880, 181813744003161222077/20160, -2267857950616037857/5760, 299528408571929531/40320]
+
+  If you must use only the first k points (k=7):
+  degree: 6; f(0): -6290016743746469796; verified: false against all n points
